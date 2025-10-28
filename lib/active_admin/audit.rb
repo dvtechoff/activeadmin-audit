@@ -1,4 +1,5 @@
 require 'active_admin'
+require 'slim-rails'
 require 'active_admin/audit/configuration'
 require 'active_admin/audit/version'
 require 'active_admin/audit/engine'

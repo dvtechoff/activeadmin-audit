@@ -7,6 +7,8 @@ module ActiveAdmin
 
       def self.load(string)
         self[JSON.parse(string || '{}')]
+        rescue
+          self[JSON('{}')]
       end
 
       def diff(other_snapshot)

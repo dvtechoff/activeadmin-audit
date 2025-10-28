@@ -1,10 +1,10 @@
 require 'yaml'
 
-ruby_versions = %w(2.3.8 2.4.9)
+ruby_versions = %w(2.3.8 3.4.7)
 
-rails_versions = %w(4.2.9 5.1.2)
-activeadmin_versions = %w(1.0.0)
-paper_trail_versions = %w(7.1.2)
+rails_versions = %w(5.1.2 8.1.2)
+activeadmin_versions = %w(3.3.0)
+paper_trail_versions = %w(17.0.0)
 
 rails_versions.each do |rails_version|
   activeadmin_versions.each do |activeadmin_version|
