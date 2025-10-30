@@ -17,10 +17,14 @@ module ActiveAdmin
           options[:versions] = (options[:versions] || {}).dup
           options[:versions][:class_name] ||= legacy_class_name || 'ActiveAdmin::Audit::ContentVersion'
 
-          has_paper_trail options.merge(on: [], meta: {
+          user_meta = options.delete(:meta) || {}
+          internal_meta = {
             additional_objects: ->(record) { record.additional_objects_snapshot.to_json },
             additional_objects_changes: ->(record) { record.additional_objects_snapshot_changes.to_json },
-          })
+          }
+          merged_meta = user_meta.merge(internal_meta)
+          options_for_paper_trail = options.merge(on: [], meta: merged_meta)
+          has_paper_trail(**options_for_paper_trail)
 
           class_eval do
             define_method(:additional_objects_snapshot) do
@@ -89,7 +93,7 @@ module ActiveAdmin
       end
 
       def additional_objects_snapshot_changes
-        prev_version = (versions.size > 0) ? versions.last : latest_versions.first
+        prev_version = (versions.size > 0) ? versions.last : latest_versions.first #check
 
         old_snapshot = prev_version.try(:additional_objects) || VersionSnapshot.new
         new_snapshot = additional_objects_snapshot
@@ -129,6 +133,44 @@ module ActiveAdmin
         @version_object_cache = nil
         @version_object_changes_cache = nil
         @version_additional_objects_and_changes_cache = nil
+      end
+
+      def combine_meta_sources(default_source, user_source)
+        default_proc = normalize_meta_source(default_source)
+        user_proc = normalize_meta_source(user_source)
+
+        return default_proc unless user_proc
+        return user_proc unless default_proc
+
+        ->(record) do
+          base_value = default_proc.call(record)
+          extra_value = user_proc.call(record)
+          merge_meta_values(base_value, extra_value)
+        end
+      end
+
+      def normalize_meta_source(source)
+        case source
+        when Proc
+          source
+        when Symbol
+          ->(record) { record.respond_to?(source, true) ? record.send(source) : source }
+        when nil
+          nil
+        else
+          ->(_record) { source }
+        end
+      end
+
+      def merge_meta_values(base, extra)
+        return extra if base.nil?
+        return base if extra.nil?
+
+        if base.is_a?(Hash) && extra.is_a?(Hash)
+          base.merge(extra)
+        else
+          extra
+        end
       end
 
        def generate_version!
