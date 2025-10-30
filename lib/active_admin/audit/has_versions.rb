@@ -135,44 +135,6 @@ module ActiveAdmin
         @version_additional_objects_and_changes_cache = nil
       end
 
-      def combine_meta_sources(default_source, user_source)
-        default_proc = normalize_meta_source(default_source)
-        user_proc = normalize_meta_source(user_source)
-
-        return default_proc unless user_proc
-        return user_proc unless default_proc
-
-        ->(record) do
-          base_value = default_proc.call(record)
-          extra_value = user_proc.call(record)
-          merge_meta_values(base_value, extra_value)
-        end
-      end
-
-      def normalize_meta_source(source)
-        case source
-        when Proc
-          source
-        when Symbol
-          ->(record) { record.respond_to?(source, true) ? record.send(source) : source }
-        when nil
-          nil
-        else
-          ->(_record) { source }
-        end
-      end
-
-      def merge_meta_values(base, extra)
-        return extra if base.nil?
-        return base if extra.nil?
-
-        if base.is_a?(Hash) && extra.is_a?(Hash)
-          base.merge(extra)
-        else
-          extra
-        end
-      end
-
        def generate_version!
         skip_attrs = Array(paper_trail_options&.[](:skip)).map(&:to_sym)
 
